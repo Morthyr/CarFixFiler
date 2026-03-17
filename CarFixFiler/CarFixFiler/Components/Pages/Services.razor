@@ -1,0 +1,49 @@
+﻿@page "/services"
+@using CarFixFiler.Dto
+@using CarFixFiler.Services
+@attribute [StreamRendering]
+@inject IServiceService ServiceService
+<PageTitle>Szervízek</PageTitle>
+
+<h1>Szervízek</h1>
+
+@if (services == null)
+{
+    <p><em>Töltés...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Név</th>
+                <th>Telefon</th>
+                <th>Rendszám</th>
+                <th>Dátum</th>
+                <th>Összeg</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var service in services)
+            {
+                <tr>
+                    <td>@service.CustomerName</td>
+                    <td>@service.CustomerTelephone</td>
+                    <td>@service.LicensePlateNumber</td>
+                    <td>@service.ServiceDate</td>
+                    <td>@service.ServiceDescription</td>
+                    <td>@service.ServiceCost</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IEnumerable<DisplayServiceDto>? services;
+
+    protected override async Task OnInitializedAsync()
+    {
+        services = await ServiceService.GetServicesAsync();
+    }
+}
