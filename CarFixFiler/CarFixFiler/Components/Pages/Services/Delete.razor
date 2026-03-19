@@ -1,0 +1,46 @@
+﻿@page "/services/delete"
+@using CarFixFiler.Dto
+@using CarFixFiler.Services
+@inject IServiceService ServiceService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Törlés</PageTitle>
+
+<h3>Biztosan törli?</h3>
+
+@if(service is null)
+{
+    <p><em>Töltés...</em></p>
+}
+else
+{
+    <dl>
+        <dt>Szervíz dátum</dt>
+        <dd>@service.ServiceDate</dd>
+        <dt>Szervíz munka</dt>
+        <dd>@service.ServiceDescription</dd>
+    </dl>
+    <EditForm method="post" Model="service" OnValidSubmit="DeleteService" FormName="delete" Enhance>
+        <button type="submit" disabled="@(service is null)">Törlés</button>
+        <a href="/services">Vissza a listához</a>
+     </EditForm>
+}
+@code {
+    private ServiceDto? service;
+    [SupplyParameterFromQuery]
+    private string LicensePlateNumber { get; set; }
+    [SupplyParameterFromQuery]
+    private DateTime Date { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        service = await ServiceService.GetServiceAsync(LicensePlateNumber, Date);
+
+        if (service is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private async Task DeleteService() => await ServiceService.DeleteAsync(service!);
+}

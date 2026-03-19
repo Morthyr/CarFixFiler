@@ -1,0 +1,68 @@
+﻿@page "/services"
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using CarFixFiler.Dto
+@using CarFixFiler.Services
+@attribute [StreamRendering]
+@inject IServiceService ServiceService
+<PageTitle>Szervízek</PageTitle>
+
+<h1>Szervízek</h1>
+
+<p>
+    <a href="services/create">Új</a>
+</p>
+
+@if (services is null)
+{
+    <p><em>Töltés...</em></p>
+}
+else
+{
+    <QuickGrid Class="table" Items="services">
+        <PropertyColumn Property="service => service.CustomerName" Title="Ügyfél név"></PropertyColumn>
+        <PropertyColumn Property="service => service.CustomerTelephone" Title="Telefon"></PropertyColumn>
+        <PropertyColumn Property="service => service.LicensePlateNumber" Title="Rendszám"></PropertyColumn>
+        <PropertyColumn Property="service => service.ServiceDate" Title="Szervíz idő"></PropertyColumn>
+        <PropertyColumn Property="service => service.ServiceDescription" Title="Szervíz munka"></PropertyColumn>
+        <PropertyColumn Property="service => service.ServiceCost" Title="Szervíz díj"></PropertyColumn>
+
+        <TemplateColumn Context="service">
+            <a href="@($"services/edit?LicensePlateNumber={service.LicensePlateNumber}&Date={service.ServiceDate}")">Edit</a> |
+            <a href="@($"services/details?LicensePlateNumber={service.LicensePlateNumber}&Date={service.ServiceDate}")">Details</a> |
+            <a href="@($"services/delete?LicensePlateNumber={service.LicensePlateNumber}&Date={service.ServiceDate}")">Delete</a>
+        </TemplateColumn>
+    </QuickGrid>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Név</th>
+                <th>Telefon</th>
+                <th>Rendszám</th>
+                <th>Dátum</th>
+                <th>Összeg</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var service in services)
+            {
+                <tr>
+                    <td>@service.CustomerName</td>
+                    <td>@service.CustomerTelephone</td>
+                    <td>@service.LicensePlateNumber</td>
+                    <td>@service.ServiceDate</td>
+                    <td>@service.ServiceDescription</td>
+                    <td>@service.ServiceCost</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IQueryable<DisplayServiceDto>? services;
+
+    protected override async Task OnInitializedAsync()
+    {
+        services = (await ServiceService.GetServicesAsync()).AsQueryable();
+    }
+}

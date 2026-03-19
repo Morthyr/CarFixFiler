@@ -1,0 +1,81 @@
+﻿@page "/services/details"
+@using CarFixFiler.Dto
+@using CarFixFiler.Services
+@attribute [StreamRendering]
+@inject IServiceService ServiceService
+@inject NavigationManager NavigationManager
+<PageTitle>Részletek</PageTitle>
+
+<h3>Részletek</h3>
+
+@if(service is null)
+{
+    <p><em>Töltés...</em></p>
+}
+else
+{
+    <dl>
+        <dt>Ügyfél név</dt>
+        <dd>@service.CustomerName</dd>
+        <dt>Ügyfél telefon</dt>
+        <dd>@service.CustomerTelephone</dd>
+        <dt>Munkadíj kedvezmény %</dt>
+        <dd>@service.LaborCostDiscount</dd>
+        <dt>Alkatrész kedvezmény %</dt>
+        <dd>@service.PartCostDiscount</dd>
+        <br />
+        <dt>Rendszám</dt>
+        <dd>@service.LicensePlateNumber</dd>
+        <dt>Alvázszám</dt>
+        <dd>@service.Vin</dd>
+        <dt>Motorkód</dt>
+        <dd>@service.EngineCode</dd>
+        <dt>Teljesítmény (kW)</dt>
+        <dd>@service.Power</dd>
+        <dt>Ccm</dt>
+        <dd>@service.EngineDisplacement</dd>
+        <dt>Gyártási év</dt>
+        <dd>@service.ManufatureYear</dd>
+        <dt>Km óra állás</dt>
+        <dd>@service.Mileage</dd>
+        <br />
+        <dt>Szervíz dátum</dt>
+        <dd>@service.ServiceDate</dd>
+        <dt>Szervíz munka</dt>
+        <dd>@service.ServiceDescription</dd>
+        <dt>Szervíz díj</dt>
+        <dd>@service.ServiceCost</dd>
+        <br />
+        @foreach(var si in service.ServiceItems)
+        {
+            <dt>Felhasznált anyag</dt>
+            <dd>@si.ItemName</dd>
+            <dt>Cikkszám</dt>
+            <dd>@si.ProductNumber</dd>
+            <dt>Beszerzési ár</dt>
+            <dd>@si.PurchasePrice</dd>
+            <dt>Eladási ár</dt>
+            <dd>@si.SellingPrice</dd>
+            <dt>Mennyiség</dt>
+            <dd>@si.Amount</dd>
+        }
+    </dl>
+    <div>
+        <a href="@($"/services/edit?LicensePlateNumber={service.LicensePlateNumber}&Date={service.ServiceDate}")">Edit</a> |
+        <a href="@($"/services")">Vissza a listához</a>
+    </div>
+}
+
+@code {
+    private ServiceDto? service;
+
+    [SupplyParameterFromQuery]
+    private string LicensePlateNumber { get; set; }
+    [SupplyParameterFromQuery] 
+    private DateTime Date { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        service = await ServiceService.GetServiceAsync(LicensePlateNumber, Date);
+    }
+}

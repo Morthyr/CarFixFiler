@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CarFixFiler.Migrations
 {
     [DbContext(typeof(CarFixFilerContext))]
-    [Migration("20260317112753_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260318143926_AddProductNumber")]
+    partial class AddProductNumber
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -98,6 +98,9 @@ namespace CarFixFiler.Migrations
 
                     b.HasKey("LicensePlateNumber", "Date");
 
+                    b.HasIndex("Date")
+                        .IsDescending();
+
                     b.ToTable("Services");
                 });
 
@@ -114,6 +117,10 @@ namespace CarFixFiler.Migrations
 
                     b.Property<int>("Amount")
                         .HasColumnType("int");
+
+                    b.Property<string>("ProductNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("PurchasePrice")
                         .HasColumnType("int");

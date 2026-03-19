@@ -1,0 +1,139 @@
+﻿@page "/services/edit"
+@using CarFixFiler.Dto
+@using CarFixFiler.Services
+@inject IServiceService ServiceService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Szerkesztés</PageTitle>
+<h1>Szerkesztés</h1>
+
+<h2>Szervíz</h2>
+<hr/>
+@if(service is null)
+{
+    <p><em>Töltés...</em></p>
+}
+else
+{
+    <EditForm method="post" Model="service" OnValidSubmit="UpdateService" FormName="edit" Enhance>
+        <DataAnnotationsValidator />
+        <ValidationSummary role="alert" />
+
+        <div>
+            <label for="CustomerName">Ügyfél név</label>
+            <InputText id="CustomerName" @bind-value="service.CustomerName" /><ValidationMessage For="() => service.CustomerName" />
+        </div>
+        <div>
+            <label for="CustomerTelephone">Ügyfél telefon</label>
+            <InputText id="CustomerTelephone" @bind-value="service.CustomerTelephone" /><ValidationMessage For="() => service.CustomerTelephone" />
+        </div>
+        <div>
+            <label for="LaborCostDiscount">Munkadíj kedvezmény %</label>
+            <InputNumber id="LaborCostDiscount" TValue="int" @bind-value="service.LaborCostDiscount" /><ValidationMessage For="() => service.LaborCostDiscount" />
+        </div>
+        <div>
+            <label for="PartCostDiscount">Alkatrész kedvezmény %</label>
+            <InputNumber id="PartCostDiscount" TValue="int" @bind-value="service.PartCostDiscount" /><ValidationMessage For="() => service.PartCostDiscount" />
+        </div>
+        <br />
+        <div>
+            <label for="LicensePlateNumber">Rendszám</label>
+            <InputText id="LicensePlateNumber" @bind-value="service.LicensePlateNumber" /><ValidationMessage For="() =>service.LicensePlateNumber " />
+        </div>
+        <div>
+            <label for="Vin">Alvázszám</label>
+            <InputText id="Vin" @bind-value="service.Vin" /><ValidationMessage For="() => service.Vin" />
+        </div>
+        <div>
+            <label for="EngineCode">Motorkód</label>
+            <InputText id="EngineCode" @bind-value="service.EngineCode" /><ValidationMessage For="() => service.EngineCode" />
+        </div>
+        <div>
+            <label for="Power">Teljesítmény (kW)</label>
+            <InputNumber id="Power" TValue="int" @bind-value="service.Power" /><ValidationMessage For="() => service.Power" />
+        </div>
+        <div>
+            <label for="EngineDisplacement">Ccm</label>
+            <InputNumber id="EngineDisplacement" TValue="int" @bind-value="service.EngineDisplacement" /><ValidationMessage For="() => service.EngineDisplacement" />
+        </div>
+        <div>
+            <label for="ManufatureYear">Gyártási év</label>
+            <InputNumber id="ManufatureYear" TValue="int" @bind-value="service.ManufatureYear" /><ValidationMessage For="() => service.ManufatureYear" />
+        </div>
+        <div>
+            <label for="Mileage">Km óra állás</label>
+            <InputNumber id="Mileage" TValue="int" @bind-value="service.Mileage" /><ValidationMessage For="() => service.Mileage" />
+        </div>
+        <br />
+        <div>
+            <label for="ServiceDate">Szervíz dátum</label>
+            <InputDate TValue="DateTime" id="ServiceDate" @bind-value="service.ServiceDate" /><ValidationMessage For="() => service.ServiceDate" />
+        </div>
+        <div>
+            <label for="ServiceDescription">Szervíz munka</label>
+            <InputText id="ServiceDescription" @bind-value="service.ServiceDescription" /><ValidationMessage For="() => service.ServiceDescription" />
+        </div>
+        <div>
+            <label for="ServiceCost">Szervíz díj</label>
+            <InputNumber id="ServiceCost" TValue="int" @bind-value="service.ServiceCost" /><ValidationMessage For="() => service.ServiceCost" />
+        </div>
+        <br />
+        <button @onclick="AddItem">Új elem</button>
+        @foreach (var si in service.ServiceItems)
+        {
+            <div>
+                <label for="ItemName">Felhasznált anyag</label>
+                <InputText id="ItemName" @bind-value="si.ItemName" /><ValidationMessage For="() => si.ItemName" />
+            </div>
+            <div>
+                <label for="ProductNumber">Cikkszám</label>
+                <InputText id="ProductNumber" @bind-value="si.ProductNumber" /><ValidationMessage For="() => si.ProductNumber" />
+            </div>
+            <div>
+                <label for="PurchasePrice">Beszerzési ár</label>
+                <InputNumber id="PurchasePrice" TValue="int" @bind-value="si.PurchasePrice" /><ValidationMessage For="() => si.PurchasePrice" />
+            </div>
+            <div>
+                <label for="SellingPrice">Eladási ár</label>
+                <InputNumber id="SellingPrice" TValue="int" @bind-value="si.SellingPrice" /><ValidationMessage For="() => si.SellingPrice" />
+            </div>
+            <div>
+                <label for="Amount">Mennyiség</label>
+                <InputNumber id="Amount" TValue="int" @bind-value="si.Amount" /><ValidationMessage For="() => si.Amount" />
+            </div>
+            <button @onclick="() => RemoveItem(si)">Eltávolít</button>
+        }
+        <button type="submit">Mentés</button>
+    </EditForm>
+}
+<div>
+    <a href="/services">Vissza a listához</a>
+</div>
+@code {
+    [SupplyParameterFromForm]
+    private ServiceDto? service { get; set; }
+
+    [SupplyParameterFromQuery]
+    private string LicensePlateNumber { get; set; }
+    [SupplyParameterFromQuery]
+    private DateTime Date { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        service = await ServiceService.GetServiceAsync(LicensePlateNumber, Date);
+
+        if (service is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    void AddItem() => service!.ServiceItems.Add(new());
+    void RemoveItem(ServiceItemDto si) => service!.ServiceItems.Remove(si);
+
+    private async Task UpdateService()
+    {
+        await ServiceService.UpdateServiceAsync(service!);
+        NavigationManager.NavigateTo("/services");
+    }
+}

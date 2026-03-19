@@ -3,6 +3,7 @@
 namespace CarFixFiler.Data;
 
 [PrimaryKey(nameof(LicensePlateNumber), nameof(Date))]
+[Index(nameof(Date), AllDescending = true)]
 public class Service
 {
     public string LicensePlateNumber { get; set; }

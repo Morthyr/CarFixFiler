@@ -95,6 +95,12 @@ namespace CarFixFiler.Migrations
                 name: "IX_Car_CustomerName",
                 table: "Car",
                 column: "CustomerName");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Services_Date",
+                table: "Services",
+                column: "Date",
+                descending: new bool[0]);
         }
 
         /// <inheritdoc />

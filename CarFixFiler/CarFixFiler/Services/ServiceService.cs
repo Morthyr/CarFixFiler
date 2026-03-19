@@ -17,6 +17,7 @@ public class ServiceService : IServiceService
     public async Task<IEnumerable<DisplayServiceDto>> GetServicesAsync() => await _context.Services
         .Include(s => s.Car).ThenInclude(c => c.Customer)
         .Include(s => s.ServiceItems)
+        .OrderByDescending(s => s.Date)
         .Select(s => new DisplayServiceDto
         {
             CustomerName = s.Car.CustomerName,
@@ -26,6 +27,47 @@ public class ServiceService : IServiceService
             ServiceDate = s.Date,
             ServiceDescription = s.Description
         }).ToListAsync();
+
+    public async Task<ServiceDto> GetServiceAsync(string licensePlateNumber, DateTime date)
+    {
+        var service = await _context.Services
+            .Include(s => s.Car).ThenInclude(c => c.Customer)
+            .Include(s => s.ServiceItems)
+            .FirstOrDefaultAsync(s => s.LicensePlateNumber == licensePlateNumber && s.Date == date);
+
+        if (service == null)
+        {
+            return null;
+        }
+
+        return new ServiceDto
+        {
+            CustomerName = service.Car.CustomerName,
+            CustomerTelephone = service.Car.Customer.Telephone,
+            LaborCostDiscount = service.Car.Customer.LaborCostDiscount,
+            PartCostDiscount = service.Car.Customer.PartCostDiscount,
+
+            LicensePlateNumber = service.Car.LicensePlateNumber,
+            Vin = service.Car.Vin,
+            EngineCode = service.Car.EngineCode,
+            Power = service.Car.Power,
+            EngineDisplacement = service.Car.EngineDisplacement,
+            ManufatureYear = service.Car.ManufatureYear,
+            Mileage = service.Car.Mileage,
+
+            ServiceDate = service.Date,
+            ServiceDescription = service.Description,
+            ServiceCost = service.Cost,
+
+            ServiceItems = service.ServiceItems.Select(si => new ServiceItemDto
+            {
+                ItemName = si.ItemName,
+                Amount = si.Amount,
+                PurchasePrice = si.PurchasePrice,
+                SellingPrice = si.SellingPrice
+            }).ToList()
+        };
+    }
 
     public async Task UpdateServiceAsync(ServiceDto service)
     {
@@ -60,6 +102,7 @@ public class ServiceService : IServiceService
         {
             Data.ServiceItem servItem = (await _context.ServiceItems.FindAsync(service.LicensePlateNumber, service.ServiceDate, serviceItem.ItemName))
                 ?? new Data.ServiceItem { LicensePlateNumber = service.LicensePlateNumber, Date = service.ServiceDate, ItemName = serviceItem.ItemName };
+            servItem.ProductNumber = serviceItem.ProductNumber;
             servItem.PurchasePrice = serviceItem.PurchasePrice;
             servItem.SellingPrice = serviceItem.SellingPrice;
             servItem.Amount = serviceItem.Amount;
@@ -67,5 +110,17 @@ public class ServiceService : IServiceService
         }
 
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<bool> DeleteAsync(ServiceDto service)
+    {
+        Data.Service serv = await _context.Services.FindAsync(service.LicensePlateNumber, service.ServiceDate);
+        if(serv is null)
+            return false;
+
+        _context.Services.Remove(serv);
+
+        await _context.SaveChangesAsync();
+        return true;
     }
 }
