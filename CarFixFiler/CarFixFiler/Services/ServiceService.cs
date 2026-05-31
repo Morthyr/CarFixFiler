@@ -1,4 +1,4 @@
-﻿using CarFixFiler.Dto;
+using CarFixFiler.Dto;
 using Microsoft.EntityFrameworkCore;
 
 namespace CarFixFiler.Services;
@@ -71,16 +71,22 @@ public class ServiceService : IServiceService
 
     public async Task UpdateServiceAsync(ServiceDto service)
     {
-        Data.Customer customer = (await _context.Customers.FindAsync(service.CustomerName))
+        // Query for existing customer by business key (Name) using indexed column
+        Data.Customer customer = await _context.Customers
+            .FirstOrDefaultAsync(c => c.Name == service.CustomerName)
             ?? new Data.Customer { Name = service.CustomerName };
+        
         customer.Telephone = service.CustomerTelephone;
         customer.LaborCostDiscount = service.LaborCostDiscount;
         customer.PartCostDiscount = service.PartCostDiscount;
 
         _context.Update(customer);
 
-        Data.Car car = (await _context.Car.FindAsync(service.LicensePlateNumber))
+        // Query for existing car by business key (LicensePlateNumber) using indexed column
+        Data.Car car = await _context.Car
+            .FirstOrDefaultAsync(c => c.LicensePlateNumber == service.LicensePlateNumber)
             ?? new Data.Car { LicensePlateNumber = service.LicensePlateNumber };
+        
         car.CustomerName = service.CustomerName;
         car.Vin = service.Vin;
         car.EngineCode = service.EngineCode;
@@ -91,17 +97,30 @@ public class ServiceService : IServiceService
 
         _context.Update(car);
 
-        Data.Service serv = (await _context.Services.FindAsync(service.LicensePlateNumber, service.ServiceDate))
+        // Query for existing service by composite business key (LicensePlateNumber, Date) using indexed columns
+        Data.Service serv = await _context.Services
+            .FirstOrDefaultAsync(s => s.LicensePlateNumber == service.LicensePlateNumber && s.Date == service.ServiceDate)
             ?? new Data.Service { LicensePlateNumber = service.LicensePlateNumber, Date = service.ServiceDate };
+        
         serv.Description = service.ServiceDescription;
         serv.Cost = service.ServiceCost;
 
         _context.Update(serv);
 
+        // Query for existing service items by composite business key using indexed columns
         foreach (var serviceItem in service.ServiceItems)
         {
-            Data.ServiceItem servItem = (await _context.ServiceItems.FindAsync(service.LicensePlateNumber, service.ServiceDate, serviceItem.ItemName))
-                ?? new Data.ServiceItem { LicensePlateNumber = service.LicensePlateNumber, Date = service.ServiceDate, ItemName = serviceItem.ItemName };
+            Data.ServiceItem servItem = await _context.ServiceItems
+                .FirstOrDefaultAsync(si => si.LicensePlateNumber == service.LicensePlateNumber 
+                    && si.Date == service.ServiceDate 
+                    && si.ItemName == serviceItem.ItemName)
+                ?? new Data.ServiceItem 
+                { 
+                    LicensePlateNumber = service.LicensePlateNumber, 
+                    Date = service.ServiceDate, 
+                    ItemName = serviceItem.ItemName 
+                };
+            
             servItem.ProductNumber = serviceItem.ProductNumber;
             servItem.PurchasePrice = serviceItem.PurchasePrice;
             servItem.SellingPrice = serviceItem.SellingPrice;
@@ -114,7 +133,10 @@ public class ServiceService : IServiceService
 
     public async Task<bool> DeleteAsync(ServiceDto service)
     {
-        Data.Service serv = await _context.Services.FindAsync(service.LicensePlateNumber, service.ServiceDate);
+        // Query for existing service by composite business key using indexed columns
+        Data.Service serv = await _context.Services
+            .FirstOrDefaultAsync(s => s.LicensePlateNumber == service.LicensePlateNumber && s.Date == service.ServiceDate);
+        
         if(serv is null)
             return false;
 
