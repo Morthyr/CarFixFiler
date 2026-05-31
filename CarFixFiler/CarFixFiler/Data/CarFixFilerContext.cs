@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using CarFixFiler.Data.ValueObjects;
 
 namespace CarFixFiler.Data;
 
@@ -20,9 +22,27 @@ public class CarFixFilerContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // Configure value converters for ID value objects
+        var customerIdConverter = new ValueConverter<CustomerId, Guid>(
+            v => v.Value,
+            v => new CustomerId(v));
+
+        var carIdConverter = new ValueConverter<CarId, Guid>(
+            v => v.Value,
+            v => new CarId(v));
+
+        var serviceIdConverter = new ValueConverter<ServiceId, Guid>(
+            v => v.Value,
+            v => new ServiceId(v));
+
+        var serviceItemIdConverter = new ValueConverter<ServiceItemId, Guid>(
+            v => v.Value,
+            v => new ServiceItemId(v));
+
         // Customer - configure shadow property for technical ID as primary key
         modelBuilder.Entity<Customer>()
-            .Property<Guid>("Id")
+            .Property<CustomerId>("Id")
+            .HasConversion(customerIdConverter)
             .HasDefaultValueSql("NEWID()")
             .ValueGeneratedOnAdd();
 
@@ -35,7 +55,8 @@ public class CarFixFilerContext : DbContext
 
         // Car - configure shadow property for technical ID as primary key
         modelBuilder.Entity<Car>()
-            .Property<Guid>("Id")
+            .Property<CarId>("Id")
+            .HasConversion(carIdConverter)
             .HasDefaultValueSql("NEWID()")
             .ValueGeneratedOnAdd();
 
@@ -43,7 +64,8 @@ public class CarFixFilerContext : DbContext
             .HasKey("Id");
 
         modelBuilder.Entity<Car>()
-            .Property<Guid>("CustomerId")
+            .Property<CustomerId>("CustomerId")
+            .HasConversion(customerIdConverter)
             .IsRequired();
 
         // Car - LicensePlateNumber as alternate key (creates unique index automatically)
@@ -52,7 +74,8 @@ public class CarFixFilerContext : DbContext
 
         // Service - configure shadow property for technical ID as primary key
         modelBuilder.Entity<Service>()
-            .Property<Guid>("Id")
+            .Property<ServiceId>("Id")
+            .HasConversion(serviceIdConverter)
             .HasDefaultValueSql("NEWID()")
             .ValueGeneratedOnAdd();
 
@@ -60,7 +83,8 @@ public class CarFixFilerContext : DbContext
             .HasKey("Id");
 
         modelBuilder.Entity<Service>()
-            .Property<Guid>("CarId")
+            .Property<CarId>("CarId")
+            .HasConversion(carIdConverter)
             .IsRequired();
 
         // Service - composite alternate key on (LicensePlateNumber, Date) - creates unique index automatically
@@ -74,7 +98,8 @@ public class CarFixFilerContext : DbContext
 
         // ServiceItem - configure shadow property for technical ID as primary key
         modelBuilder.Entity<ServiceItem>()
-            .Property<Guid>("Id")
+            .Property<ServiceItemId>("Id")
+            .HasConversion(serviceItemIdConverter)
             .HasDefaultValueSql("NEWID()")
             .ValueGeneratedOnAdd();
 
@@ -82,7 +107,8 @@ public class CarFixFilerContext : DbContext
             .HasKey("Id");
 
         modelBuilder.Entity<ServiceItem>()
-            .Property<Guid>("ServiceId")
+            .Property<ServiceId>("ServiceId")
+            .HasConversion(serviceIdConverter)
             .IsRequired();
 
         // ServiceItem - composite alternate key on (LicensePlateNumber, Date, ItemName) - creates unique index automatically
