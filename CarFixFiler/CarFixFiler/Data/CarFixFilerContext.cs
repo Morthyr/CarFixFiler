@@ -20,42 +20,90 @@ public class CarFixFilerContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // Service -> ServiceItems relationship
+        // Customer - configure shadow property for technical ID
+        modelBuilder.Entity<Customer>()
+            .Property<Guid>("Id")
+            .HasDefaultValueSql("NEWID()")
+            .ValueGeneratedOnAdd();
+
+        // Car - configure shadow property for technical ID
+        modelBuilder.Entity<Car>()
+            .Property<Guid>("CustomerId")
+            .IsRequired();
+
+        modelBuilder.Entity<Car>()
+            .Property<Guid>("Id")
+            .HasDefaultValueSql("NEWID()")
+            .ValueGeneratedOnAdd();
+
+        // Service - configure shadow property for technical ID
+        modelBuilder.Entity<Service>()
+            .Property<Guid>("CarId")
+            .IsRequired();
+
+        modelBuilder.Entity<Service>()
+            .Property<Guid>("Id")
+            .HasDefaultValueSql("NEWID()")
+            .ValueGeneratedOnAdd();
+
+        modelBuilder.Entity<Service>()
+            .HasKey("Id");
+
+        modelBuilder.Entity<Service>()
+            .HasIndex(nameof(Service.LicensePlateNumber), nameof(Service.Date))
+            .IsUnique()
+            .HasDatabaseName("IX_Services_BusinessKey");
+
+        modelBuilder.Entity<Service>()
+            .HasIndex(nameof(Service.Date))
+            .IsDescending();
+
+        // ServiceItem - configure shadow property for technical ID
+        modelBuilder.Entity<ServiceItem>()
+            .Property<Guid>("ServiceId")
+            .IsRequired();
+
+        modelBuilder.Entity<ServiceItem>()
+            .Property<Guid>("Id")
+            .HasDefaultValueSql("NEWID()")
+            .ValueGeneratedOnAdd();
+
+        modelBuilder.Entity<ServiceItem>()
+            .HasKey("Id");
+
+        modelBuilder.Entity<ServiceItem>()
+            .HasIndex(nameof(ServiceItem.LicensePlateNumber), nameof(ServiceItem.Date), nameof(ServiceItem.ItemName))
+            .IsUnique()
+            .HasDatabaseName("IX_ServiceItems_BusinessKey");
+
+        // Relationships
         modelBuilder.Entity<Service>()
             .HasMany(s => s.ServiceItems)
             .WithOne(si => si.Service)
-            .HasForeignKey(si => si.ServiceId)
+            .HasForeignKey("ServiceId")
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Car -> Services relationship
         modelBuilder.Entity<Car>()
             .HasMany(c => c.Services)
             .WithOne(s => s.Car)
-            .HasForeignKey(s => s.CarId)
+            .HasForeignKey("CarId")
             .OnDelete(DeleteBehavior.Cascade);
         
-        // Customer -> Cars relationship
         modelBuilder.Entity<Customer>()
             .HasMany(c => c.Cars)
             .WithOne(c => c.Customer)
-            .HasForeignKey(c => c.CustomerId)
+            .HasForeignKey("CustomerId")
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Add unique constraints on business keys
+        // Unique constraints on business keys
         modelBuilder.Entity<Customer>()
             .HasIndex(c => c.Name)
-            .IsUnique();
+            .IsUnique()
+            .HasDatabaseName("IX_Customers_BusinessKey");
 
         modelBuilder.Entity<Car>()
             .HasIndex(c => c.LicensePlateNumber)
-            .IsUnique();
-
-        modelBuilder.Entity<Service>()
-            .HasIndex(s => new { s.LicensePlateNumber, s.Date })
-            .IsUnique();
-
-        modelBuilder.Entity<ServiceItem>()
-            .HasIndex(si => new { si.LicensePlateNumber, si.Date, si.ItemName })
-            .IsUnique();
+            .IsUnique()
+            .HasDatabaseName("IX_Cars_BusinessKey");
     }
 }
