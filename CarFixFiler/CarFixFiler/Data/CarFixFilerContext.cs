@@ -20,64 +20,59 @@ public class CarFixFilerContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // Customer - configure shadow property for technical ID
+        // Customer - configure shadow property for technical ID as primary key
         modelBuilder.Entity<Customer>()
             .Property<Guid>("Id")
             .HasDefaultValueSql("NEWID()")
             .ValueGeneratedOnAdd();
 
-        // Customer - unique index on Name (business key) for efficient lookups
         modelBuilder.Entity<Customer>()
-            .HasIndex(c => c.Name)
-            .IsUnique()
-            .HasDatabaseName("IX_Customers_Name_Unique");
+            .HasKey("Id");
 
-        // Car - configure shadow property for technical ID
+        // Customer - Name as alternate key (creates unique index automatically)
+        modelBuilder.Entity<Customer>()
+            .HasAlternateKey(c => c.Name);
+
+        // Car - configure shadow property for technical ID as primary key
+        modelBuilder.Entity<Car>()
+            .Property<Guid>("Id")
+            .HasDefaultValueSql("NEWID()")
+            .ValueGeneratedOnAdd();
+
+        modelBuilder.Entity<Car>()
+            .HasKey("Id");
+
         modelBuilder.Entity<Car>()
             .Property<Guid>("CustomerId")
             .IsRequired();
 
+        // Car - LicensePlateNumber as alternate key (creates unique index automatically)
         modelBuilder.Entity<Car>()
+            .HasAlternateKey(c => c.LicensePlateNumber);
+
+        // Service - configure shadow property for technical ID as primary key
+        modelBuilder.Entity<Service>()
             .Property<Guid>("Id")
             .HasDefaultValueSql("NEWID()")
             .ValueGeneratedOnAdd();
 
-        // Car - unique index on LicensePlateNumber (business key) for efficient lookups
-        modelBuilder.Entity<Car>()
-            .HasIndex(c => c.LicensePlateNumber)
-            .IsUnique()
-            .HasDatabaseName("IX_Cars_LicensePlateNumber_Unique");
+        modelBuilder.Entity<Service>()
+            .HasKey("Id");
 
-        // Service - configure shadow property for technical ID
         modelBuilder.Entity<Service>()
             .Property<Guid>("CarId")
             .IsRequired();
 
+        // Service - composite alternate key on (LicensePlateNumber, Date) - creates unique index automatically
         modelBuilder.Entity<Service>()
-            .Property<Guid>("Id")
-            .HasDefaultValueSql("NEWID()")
-            .ValueGeneratedOnAdd();
-
-        modelBuilder.Entity<Service>()
-            .HasKey("Id");
-
-        // Service - unique index on composite business key (LicensePlateNumber, Date) for efficient lookups
-        modelBuilder.Entity<Service>()
-            .HasIndex(nameof(Service.LicensePlateNumber), nameof(Service.Date))
-            .IsUnique()
-            .HasDatabaseName("IX_Services_LicensePlateNumber_Date_Unique");
+            .HasAlternateKey(nameof(Service.LicensePlateNumber), nameof(Service.Date));
 
         // Service - index on Date for ordering queries
         modelBuilder.Entity<Service>()
             .HasIndex(nameof(Service.Date))
-            .IsDescending()
-            .HasDatabaseName("IX_Services_Date_Descending");
+            .IsDescending();
 
-        // ServiceItem - configure shadow property for technical ID
-        modelBuilder.Entity<ServiceItem>()
-            .Property<Guid>("ServiceId")
-            .IsRequired();
-
+        // ServiceItem - configure shadow property for technical ID as primary key
         modelBuilder.Entity<ServiceItem>()
             .Property<Guid>("Id")
             .HasDefaultValueSql("NEWID()")
@@ -86,11 +81,13 @@ public class CarFixFilerContext : DbContext
         modelBuilder.Entity<ServiceItem>()
             .HasKey("Id");
 
-        // ServiceItem - unique index on composite business key for efficient lookups
         modelBuilder.Entity<ServiceItem>()
-            .HasIndex(nameof(ServiceItem.LicensePlateNumber), nameof(ServiceItem.Date), nameof(ServiceItem.ItemName))
-            .IsUnique()
-            .HasDatabaseName("IX_ServiceItems_LicensePlateNumber_Date_ItemName_Unique");
+            .Property<Guid>("ServiceId")
+            .IsRequired();
+
+        // ServiceItem - composite alternate key on (LicensePlateNumber, Date, ItemName) - creates unique index automatically
+        modelBuilder.Entity<ServiceItem>()
+            .HasAlternateKey(nameof(ServiceItem.LicensePlateNumber), nameof(ServiceItem.Date), nameof(ServiceItem.ItemName));
 
         // Relationships
         modelBuilder.Entity<Service>()
